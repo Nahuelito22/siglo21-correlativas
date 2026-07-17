@@ -5,15 +5,6 @@ anotarlas para no perderlas. Cuando una se implementa, se mueve a "Hechas".
 
 ## Pendientes
 
-### Tutorial de bienvenida (onboarding)
-Pantalla o recorrido guiado para quien entra por primera vez, explicando qué
-hace cada apartado: cómo marcar estados en el **Plan de estudios**, cómo leer el
-**Mapa de correlativas** (rojo = necesita, azul = habilita) y qué muestra
-**Estadísticas**. Se muestra una sola vez (flag en `localStorage`, ej.
-`siglo21-tutorial-visto`) con opción de saltarlo y de volver a verlo desde un
-botón de ayuda «?» en el header. Posibles formatos: modal con pasos, o tooltips
-anclados a cada pestaña (coach marks).
-
 ### Nombres reales de las Electivas
 Hoy figuran como "Electiva 1/2" porque así están en el Excel. Si la universidad
 publica el catálogo de electivas, permitir elegir cuál cursó cada uno.
@@ -32,3 +23,6 @@ Tiene sentido solo si compañeros de otras carreras lo piden.
 - ✅ Export/import JSON, modo oscuro, persistencia en localStorage
 - ✅ Open Graph (vista previa al compartir en chats)
 - ✅ PWA: instalable y offline tras la primera visita
+- ✅ Tutorial de bienvenida: modal de 5 pasos en la primera visita, con flag en
+  `localStorage` y botón «?» en el header para volver a verlo (jul 2026)
+- ✅ Vercel Web Analytics (script en el sitio; se activa desde el dashboard)

@@ -7,6 +7,9 @@ import { PlanView } from "./PlanView";
 import { MapaView } from "./MapaView";
 import { StatsView } from "./StatsView";
 import { Toolbar } from "./Toolbar";
+import { Tutorial } from "./Tutorial";
+
+const TUTORIAL_KEY = "siglo21-tutorial-visto";
 
 type Tab = "plan" | "mapa" | "stats";
 
@@ -29,11 +32,18 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("plan");
   const [dark, setDark] = useState(false);
   const [compartido, setCompartido] = useState<Estados | null>(null);
+  const [tutorial, setTutorial] = useState(false);
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains("dark"));
     setCompartido(leerCompartido());
+    if (!localStorage.getItem(TUTORIAL_KEY)) setTutorial(true);
   }, []);
+
+  const cerrarTutorial = () => {
+    localStorage.setItem(TUTORIAL_KEY, "true");
+    setTutorial(false);
+  };
 
   const toggleDark = () => {
     const next = !dark;
@@ -76,6 +86,7 @@ export default function App() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      {tutorial && <Tutorial onCerrar={cerrarTutorial} />}
       <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-(--ink)">
@@ -94,6 +105,14 @@ export default function App() {
               {avance.aprobadas}/{avance.total} aprobadas
             </div>
           </div>
+          <button
+            onClick={() => setTutorial(true)}
+            className="w-8 h-8 text-sm font-bold rounded-lg border border-(--border) bg-(--surface) text-(--ink-2) hover:text-(--ink) transition-colors cursor-pointer"
+            title="Ver el tutorial"
+            aria-label="Ver el tutorial"
+          >
+            ?
+          </button>
           <button
             onClick={toggleDark}
             className="px-3 py-1.5 text-xs font-medium rounded-lg border border-(--border) bg-(--surface) text-(--ink-2) hover:text-(--ink) transition-colors cursor-pointer"

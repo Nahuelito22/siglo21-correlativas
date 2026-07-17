@@ -50,6 +50,8 @@ const ogImage = new URL("/og.png", Astro.site);
   </head>
   <body>
     <App client:load />
+    <!-- Vercel Web Analytics (requiere activar Analytics en el dashboard de Vercel) -->
+    <script is:inline defer src="/_vercel/insights/script.js"></script>
     <script is:inline>
       // PWA: registra el service worker solo en producción (no en dev/preview local).
       if (

@@ -1,6 +1,6 @@
 // Service worker: la app funciona offline una vez visitada.
 // Assets con hash (/_astro/): cache-first. Páginas: network-first con fallback a caché.
-const CACHE = "s21-correlativas-v1";
+const CACHE = "s21-correlativas-v2";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -26,6 +26,8 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== location.origin) return;
+  // Analytics de Vercel: nunca cachear ni interceptar.
+  if (url.pathname.startsWith("/_vercel/")) return;
 
   if (url.pathname.startsWith("/_astro/")) {
     event.respondWith(
