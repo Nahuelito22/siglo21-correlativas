@@ -24,7 +24,7 @@ const colorEstado: Record<EstadoMateria, string> = {
 };
 
 export default function App() {
-  const { estados, loaded, toggleEstado, setEstadosImport, resetEstados } =
+  const { estados, loaded, toggleEstado, setEstado, setEstadosImport, resetEstados } =
     useEstados();
   const [tab, setTab] = useState<Tab>("plan");
   const [dark, setDark] = useState(false);
@@ -188,7 +188,7 @@ export default function App() {
       {tab === "mapa" && (
         <MapaView
           estados={estadosVista}
-          onToggle={toggleEstado}
+          onSetEstado={setEstado}
           readOnly={modoCompartido}
         />
       )}

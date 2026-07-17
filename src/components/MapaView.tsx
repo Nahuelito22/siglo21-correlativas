@@ -8,12 +8,7 @@ import {
   type Estados,
   type EstadoMateria,
 } from "@/data/materias";
-import {
-  ancestros,
-  descendientes,
-  materiaDisponible,
-  estaAprobada,
-} from "@/lib/correlativas";
+import { ancestros, descendientes, materiaDisponible, estaAprobada } from "@/lib/correlativas";
 
 const NODO_W = 156;
 const NODO_H = 38;
@@ -39,14 +34,16 @@ function truncar(nombre: string, max = 21): string {
 
 export function MapaView({
   estados,
-  onToggle,
+  onSetEstado,
   readOnly,
 }: {
   estados: Estados;
-  onToggle: (id: string) => void;
+  onSetEstado: (id: string, estado: EstadoMateria) => void;
   readOnly: boolean;
 }) {
   const [hover, setHover] = useState<string | null>(null);
+  const [seleccionada, setSeleccionada] = useState<string | null>(null);
+  const activa = hover ?? seleccionada;
 
   const { posiciones, ancho, alto } = useMemo(() => {
     const posiciones: Record<string, Pos> = {};
@@ -69,16 +66,16 @@ export function MapaView({
   }, []);
 
   const relacion = useMemo(() => {
-    if (!hover) return null;
+    if (!activa) return null;
     return {
-      requisitos: ancestros(hover),
-      habilitadas: descendientes(hover),
+      requisitos: ancestros(activa),
+      habilitadas: descendientes(activa),
     };
-  }, [hover]);
+  }, [activa]);
 
   const esRelacionada = (id: string) =>
     !relacion ||
-    id === hover ||
+    id === activa ||
     relacion.requisitos.has(id) ||
     relacion.habilitadas.has(id);
 
@@ -90,15 +87,16 @@ export function MapaView({
     []
   );
 
-  const materiaHover = hover ? mapaMaterias[hover] : null;
+  const materiaActiva = activa ? mapaMaterias[activa] : null;
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-(--ink-muted)">
-        Pasá el mouse sobre una materia para ver su cadena de correlativas: en{" "}
+        Tocá o pasá el cursor sobre una materia para ver su cadena de
+        correlativas: en{" "}
         <span className="font-semibold" style={{ color: "var(--c-bloq)" }}>rojo</span> lo
         que necesita, en <span className="font-semibold text-(--accent)">azul</span> lo
-        que habilita.{!readOnly && " Clic para cambiar el estado."}
+        que habilita.{!readOnly && " El estado se cambia desde el panel de abajo."}
       </p>
 
       <div className="overflow-x-auto rounded-xl border border-(--border) bg-(--surface) p-2">
@@ -135,30 +133,33 @@ export function MapaView({
             const x2 = b.x;
             const y2 = b.y + NODO_H / 2;
             const mx = (x1 + x2) / 2;
-            const activa =
-              hover &&
+            const conectada =
+              activa &&
+              relacion &&
               esRelacionada(desde) &&
               esRelacionada(hasta) &&
-              (desde === hover ||
-                hasta === hover ||
-                relacion!.requisitos.has(hasta) ||
-                relacion!.habilitadas.has(desde));
+              (desde === activa ||
+                hasta === activa ||
+                relacion.requisitos.has(hasta) ||
+                relacion.habilitadas.has(desde));
             const haciaRequisito =
-              hover && (hasta === hover || relacion!.requisitos.has(hasta));
+              activa &&
+              relacion &&
+              (hasta === activa || relacion.requisitos.has(hasta));
             return (
               <path
                 key={`${desde}-${hasta}`}
                 d={`M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}`}
                 fill="none"
                 stroke={
-                  activa
+                  conectada
                     ? haciaRequisito
                       ? "var(--c-bloq)"
                       : "var(--accent)"
                     : "var(--grid)"
                 }
-                strokeWidth={activa ? 2.5 : 1.5}
-                opacity={hover && !activa ? 0.25 : 1}
+                strokeWidth={conectada ? 2.5 : 1.5}
+                opacity={activa && !conectada ? 0.25 : 1}
               />
             );
           })}
@@ -171,14 +172,17 @@ export function MapaView({
             const relacionada = esRelacionada(m.id);
             const esRequisito = relacion?.requisitos.has(m.id);
             const esHabilitada = relacion?.habilitadas.has(m.id);
+            const esActiva = m.id === activa;
             return (
               <g
                 key={m.id}
                 transform={`translate(${p.x}, ${p.y})`}
                 opacity={relacionada ? 1 : 0.22}
                 onMouseEnter={() => setHover(m.id)}
-                onClick={() => !readOnly && onToggle(m.id)}
-                style={{ cursor: readOnly ? "default" : "pointer" }}
+                onClick={() =>
+                  setSeleccionada((prev) => (prev === m.id ? null : m.id))
+                }
+                style={{ cursor: "pointer" }}
               >
                 <title>{`${m.nombre} — ${leyendaEstados[estado]}`}</title>
                 <rect
@@ -187,7 +191,7 @@ export function MapaView({
                   rx={9}
                   fill={colorEstado[estado]}
                   stroke={
-                    m.id === hover
+                    esActiva
                       ? "var(--ink)"
                       : esRequisito
                         ? "var(--c-bloq)"
@@ -197,7 +201,7 @@ export function MapaView({
                             ? "var(--accent)"
                             : "transparent"
                   }
-                  strokeWidth={m.id === hover ? 2.5 : 2}
+                  strokeWidth={esActiva ? 2.5 : 2}
                 />
                 <text
                   x={10}
@@ -226,20 +230,46 @@ export function MapaView({
         </svg>
       </div>
 
-      {/* Panel de detalle de la materia bajo el cursor */}
+      {/* Panel de detalle de la materia activa */}
       <div className="min-h-16 rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm">
-        {materiaHover ? (
-          <div className="space-y-1">
-            <div className="font-semibold text-(--ink)">
-              {materiaHover.nombre}{" "}
-              <span className="font-normal text-(--ink-muted)">
-                — {leyendaEstados[estados[materiaHover.id] ?? "P"]}
-              </span>
+        {materiaActiva ? (
+          <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 justify-between">
+              <div className="font-semibold text-(--ink)">
+                {materiaActiva.nombre}{" "}
+                <span className="font-normal text-(--ink-muted)">
+                  — {leyendaEstados[estados[materiaActiva.id] ?? "P"]}
+                </span>
+              </div>
+              {!readOnly && (
+                <div className="flex gap-1.5 shrink-0" role="group" aria-label="Cambiar estado">
+                  {(Object.keys(leyendaEstados) as EstadoMateria[]).map((e) => {
+                    const actual = (estados[materiaActiva.id] ?? "P") === e;
+                    return (
+                      <button
+                        key={e}
+                        onClick={() => onSetEstado(materiaActiva.id, e)}
+                        title={leyendaEstados[e]}
+                        className={[
+                          "px-2.5 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer",
+                          actual
+                            ? "text-white border-transparent"
+                            : "bg-(--surface) text-(--ink-2) border-(--border) hover:text-(--ink)",
+                        ].join(" ")}
+                        style={actual ? { background: colorEstado[e] } : undefined}
+                        aria-pressed={actual}
+                      >
+                        {e} · {leyendaEstados[e]}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            {materiaHover.correlativas.length > 0 ? (
+            {materiaActiva.correlativas.length > 0 ? (
               <div className="text-xs text-(--ink-2)">
                 <span className="font-semibold">Necesita:</span>{" "}
-                {materiaHover.correlativas
+                {materiaActiva.correlativas
                   .map(
                     (c) =>
                       `${mapaMaterias[c]?.nombre ?? c}${estaAprobada(c, estados) ? " ✓" : " ✗"}`
@@ -249,10 +279,10 @@ export function MapaView({
             ) : (
               <div className="text-xs text-(--ink-2)">Sin correlativas.</div>
             )}
-            {descendientes(materiaHover.id).size > 0 && (
+            {descendientes(materiaActiva.id).size > 0 && (
               <div className="text-xs text-(--ink-2)">
                 <span className="font-semibold">Habilita (en cadena):</span>{" "}
-                {[...descendientes(materiaHover.id)]
+                {[...descendientes(materiaActiva.id)]
                   .map((id) => mapaMaterias[id]?.nombre ?? id)
                   .join(" · ")}
               </div>
@@ -260,7 +290,8 @@ export function MapaView({
           </div>
         ) : (
           <span className="text-xs text-(--ink-muted)">
-            Pasá el cursor sobre el mapa para ver el detalle de una materia.
+            Tocá una materia del mapa para ver su detalle
+            {!readOnly && " y cambiar su estado"}.
           </span>
         )}
       </div>
