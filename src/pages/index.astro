@@ -1,0 +1,33 @@
+---
+import "@/styles/global.css";
+import App from "@/components/App";
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Correlativas — Lic. en Ciencia de Datos | Siglo 21</title>
+    <meta
+      name="description"
+      content="Seguí tu avance en la Lic. en Ciencia de Datos de la Universidad Siglo 21: marcá materias aprobadas, mirá el mapa de correlativas y descubrí qué podés cursar."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>"
+    />
+    <script is:inline>
+      // Aplica el tema antes de pintar para evitar el destello de tema incorrecto.
+      const guardado = localStorage.getItem("siglo21-dark");
+      const dark =
+        guardado !== null
+          ? guardado === "true"
+          : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.classList.toggle("dark", dark);
+    </script>
+  </head>
+  <body>
+    <App client:load />
+  </body>
+</html>
